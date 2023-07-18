@@ -5,17 +5,14 @@ public with sharing class MockSelectorProvider implements System.StubProvider {
 
     private static integer callCountSingle = -1;
     private static integer callCountList = -1;
-    private static integer callCountMap = -1;
 
     public static SObject record;
     public static List<SObject> recordList;
-    public static Map<Id,SObject> recordMap;
 
     public static List<SObject> mcRecord;
     public static List<List<SObject>> mcRecordList;
-    public static List<Map<Id, SObject>> mcRecordMap;
 
-    
+    public static Selector mockSelector;
     
     public Object handleMethodCall(Object stubbedObject, String stubbedMethodName, Type returnType, List<Type> listOfParamTypes, List<String> listOfParamNames, List<Object> listOfArgs) {
         
@@ -26,11 +23,7 @@ public with sharing class MockSelectorProvider implements System.StubProvider {
             }
             if (returnType.getName() == 'List<SObject>'){
                 callCountList += 1;
-                return mcRecordList.get(callCountSingle);
-            }
-            if (returnType.getName() == 'Map<Id,SObject>'){   
-                callCountMap += 1;
-                return mcRecordMap.get(callCountSingle);
+                return mcRecordList.get(callCountList);
             }
         }else{
             if (returnType.getName() == 'SObject'){
@@ -39,10 +32,12 @@ public with sharing class MockSelectorProvider implements System.StubProvider {
             if (returnType.getName() == 'List<SObject>'){
                 return recordList;
             }
-            if (returnType.getName() == 'Map<Id,SObject>'){   
-                return recordMap;
-            }
         }
+
+        if (returnType.getName() == 'Selector'){
+            return mockSelector;
+        }
+        
         return null;
     }
 }
