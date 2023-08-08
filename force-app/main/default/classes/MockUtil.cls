@@ -23,8 +23,10 @@ public class MockUtil {
         return Test.createStub(typeToMock, MockUtil.getErrorInstance());
     }
 
-    public static Object createSelectorMock(Type typeToMock){
-        return Test.createStub(typeToMock, MockUtil.getSelectorInstance());
+    public static Object createSelectorMock(){
+        Object stub = Test.createStub(Selector.class, MockUtil.getSelectorInstance());
+        MockSelectorProvider.mockSelector = (Selector)stub;
+        return stub;
     }
 
     public static String getFakeId(Schema.SObjectType sot){
