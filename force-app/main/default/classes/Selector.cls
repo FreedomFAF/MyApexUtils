@@ -1,6 +1,6 @@
 public with sharing class Selector {
 
-    private static System.AccessLevel currentAccessLevel = AccessLevel.USER_MODE; // default it to system mode, user mode hard enforces sharing
+    private static System.AccessLevel currentAccessLevel = AccessLevel.SYSTEM_MODE; // default it to system mode 
 
     public static void systemMode(){
         currentAccessLevel = AccessLevel.SYSTEM_MODE; 
