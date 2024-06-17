@@ -1,6 +1,6 @@
 public with sharing class Selector {
 
-    private static System.AccessLevel currentAccessLevel = AccessLevel.USER_MODE; // default it to user mode 
+    private static System.AccessLevel currentAccessLevel = AccessLevel.USER_MODE; // default it to system mode, user mode hard enforces sharing
 
     public static void systemMode(){
         currentAccessLevel = AccessLevel.SYSTEM_MODE; 
@@ -30,9 +30,14 @@ public with sharing class Selector {
     }
 
     public Selector(SObjectType objectType, String selectType){
-        //select types values can be read or update
+        //select types values can be read, update, systemMode or explicit (use explicit for objects like UserRecordAccess where the metadata is a mess)
         this.objectType = objectType; 
         buildFieldList(new List<String>(), selectType);
+    }
+
+    public Selector (SObjectType objectType, List<String> extraFields, String selectType){
+        this.objectType = objectType;
+        buildFieldList(extraFields, selectType);
     }
 
     private void buildFieldList(List<String> extraFields, String selectType){
@@ -40,20 +45,22 @@ public with sharing class Selector {
         selectingOn = objectDescribe.getName();
         Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
         fieldList = '';
-        for (String fieldName :fieldMap.keySet()){
-            DescribeFieldResult fieldDescibe = fieldMap.get(fieldName).getDescribe();
-            switch on selectType {
-                when 'update' {
-                    if (fieldDescibe.isUpdateable() && fieldDescibe.isAccessible()){
+        if (selectType != 'explicit'){
+            for (String fieldName :fieldMap.keySet()){
+                DescribeFieldResult fieldDescibe = fieldMap.get(fieldName).getDescribe();
+                switch on selectType {
+                    when 'update' {
+                        if (fieldDescibe.isUpdateable() && fieldDescibe.isAccessible()){
+                            fieldList += fieldDescibe.getName() + ',';
+                        }
+                    }
+                    when 'systemMode'{
                         fieldList += fieldDescibe.getName() + ',';
                     }
-                }
-                when 'systemMode'{
-                    fieldList += fieldDescibe.getName() + ',';
-                }
-                when else {
-                    if (fieldDescibe.isAccessible()){
-                        fieldList += fieldDescibe.getName() + ',';
+                    when else {
+                        if (fieldDescibe.isAccessible()){
+                            fieldList += fieldDescibe.getName() + ',';
+                        }
                     }
                 }
             }
@@ -113,6 +120,21 @@ public with sharing class Selector {
 
     public Selector wNotEqual(String field, Object value){
         whereClause += field + ' != :' + createBind(value);
+        return this;
+    }
+
+    public Selector wLessThan(String field, Object value){
+        whereClause += field + ' < :' + createBind(value);
+        return this;
+    }
+
+    public Selector wGreaterThan(String field, Object value){
+        whereClause += field + ' > :' + createBind(value);
+        return this;
+    }
+    
+    public Selector wGreaterThanEqual(String field, Object value){
+        whereClause += field + ' >= :' + createBind(value);
         return this;
     }
 

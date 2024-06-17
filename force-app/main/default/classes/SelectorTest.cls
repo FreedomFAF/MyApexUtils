@@ -74,7 +74,7 @@ public with sharing class SelectorTest {
     public static void testWEqual(){
         Selector testSelector = new Selector(Schema.Account.getSObjectType());
         Test.startTest();
-        testSelector.wEqual('Id', MockUtil.getFakeId(Schema.Account.getSObjectType()));
+        testSelector.wEqual('Id', Stub.getId(Schema.Account.getSObjectType()));
         Test.stopTest();
         Assert.isTrue(testSelector.whereClause.contains('Id = '),'the expected equals was not present in the query\'s where clause');
     }
@@ -83,7 +83,7 @@ public with sharing class SelectorTest {
     public static void testWNotEqual(){
         Selector testSelector = new Selector(Schema.Account.getSObjectType());
         Test.startTest();
-        testSelector.wNotEqual('Id', MockUtil.getFakeId(Schema.Account.getSObjectType()));
+        testSelector.wNotEqual('Id', Stub.getId(Schema.Account.getSObjectType()));
         Test.stopTest();
         Assert.isTrue(testSelector.whereClause.contains('Id != '),'the expected not equals was not present in the query\'s where clause');
     }
@@ -111,7 +111,7 @@ public with sharing class SelectorTest {
     @istest
     public static void testWInId(){
         Selector testSelector = new Selector(Schema.Account.getSObjectType());
-        Set<Id> values = new Set<Id>{MockUtil.getFakeId(Schema.Account.getSObjectType())};
+        Set<Id> values = new Set<Id>{Stub.getId(Schema.Account.getSObjectType())};
         Test.startTest();
         testSelector.wIn('Id', values);
         Test.stopTest();

@@ -92,6 +92,36 @@ public with sharing class DMLTest {
         System.assert(aNew.Name.endsWith('D'), 'The Accounts Name should end with D');
     }
 
+     /*@istest
+    public static void testDoUpsertBulkExternalId(){
+        List<Account> accounts = [SELECT Id, Name, Panel_Firm_Id__c FROM Account];
+        for (Account account : accounts){
+            account.Name += 'C';
+        }
+        DML dml = new DML();
+        Test.startTest();
+        dml.doUpsert(accounts, Schema.Account.Panel_Firm_Id__c.getDescribe(), true);
+        Test.stopTest();
+        List<Account> newAccounts = [SELECT Id, Name FROM Account];
+        Integer r = Integer.valueOf(Math.random() * (newAccounts.size() - 1));// the valueof should be replaced by a Math.floor and the -1 removed for a more evenly distributed random number 
+        System.assert(newAccounts[r].Name.endsWith('C'), 'The Accounts name should end with an C');
+    }
+
+
+    @istest
+    public static void testDoUpsertExternalId(){
+        // you'll need your own external id field for this, there isn't a standard salesforce Id field 
+        DML dml = new DML();
+        Account a = [SELECT Id, Name, Panel_Firm_Id__c FROM Account LIMIT 1];
+        Id theAccountId = a.Id;
+        a.Name += 'D';
+        Test.startTest();
+        dml.doUpsert(a, Schema.Account.Panel_Firm_Id__c.getDescribe(), true);
+        Test.stopTest();
+        Account aNew = [SELECT Id, Name FROM Account WHERE Id = :theAccountId LIMIT 1];
+        System.assert(aNew.Name.endsWith('D'), 'The Accounts Name should end with D');
+    }*/
+
     @istest
     public static void testDoDeleteBulk(){
         Set<Id> accIds = new Set<Id>();
@@ -120,5 +150,48 @@ public with sharing class DMLTest {
 
         System.assert(aNew.size() == 0, 'The size of the reselected list should be 0');
         
+    }
+
+    @istest
+    public static void testSendEmail(){
+
+        DML dml = new DML();
+        Messaging.SingleEmailMessage sem = new Messaging.SingleEmailMessage();
+        sem.setToAddresses(new List<String>{'james.golding@blumegroup.co.uk'});
+        sem.setSubject('testing');
+        sem.setPlainTextBody('body testing');
+        Test.startTest();
+        dml.sendEmail(new List<Messaging.SingleEmailMessage>{sem}, true);
+        Test.stopTest();
+
+        Assert.isTrue(Limits.getDMLStatements() == 1, 'expecting the number of emails sent to be 1, but received ' + Limits.getEmailInvocations().format());
+    }
+
+    @istest
+    public static void executeBatch(){
+        // if you do not have a batchable in the org comment this out 
+        DML dml = new DML();
+        DML mockDml = (DML)Stub.builder().create(DML.class);
+
+        SObjectDeleter batchable = new SObjectDeleter('SELECT Id FROM Lead', mockDml);
+        Test.startTest();
+        Id batchprocessid = dml.executeBatch(batchable);
+        Test.stopTest();
+        List<AsyncApexJob> aaj = [SELECT Id, Status, JobItemsProcessed, TotalJobItems, NumberOfErrors FROM AsyncApexJob WHERE Id =: batchprocessid ];
+        Assert.isTrue(aaj.size() > 0, 'Expect to find a async job with batch Id \'' + batchprocessid + '\', but didn\'t find one');
+    }
+
+    @istest
+    public static void executeBatchSizeSpecified(){
+        // if you do not have a batchable in the org comment this out 
+        DML dml = new DML();
+        DML mockDml = (DML)Stub.Builder().create(DML.class);
+
+        SObjectDeleter batchable = new SObjectDeleter('SELECT Id FROM Lead', mockDml);
+        Test.startTest();
+        Id batchprocessid = dml.executeBatch(batchable, 50);
+        Test.stopTest();
+        List<AsyncApexJob> aaj = [SELECT Id, Status, JobItemsProcessed, TotalJobItems, NumberOfErrors FROM AsyncApexJob WHERE Id =: batchprocessid ];
+        Assert.isTrue(aaj.size() > 0, 'Expect to find a async job with batch Id \'' + batchprocessid + '\', but didn\'t find one');
     }
 }
